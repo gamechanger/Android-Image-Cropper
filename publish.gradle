@@ -1,0 +1,45 @@
+apply plugin: 'maven'
+
+repositories {
+    maven { url "https://raw.github.com/synergian/wagon-git/releases" }
+}
+
+configurations {
+    deployerJar
+}
+
+dependencies {
+    deployerJar "ar.com.synergian:wagon-git:0.3.0"
+}
+
+task sourcesJar(type: Jar){
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc){
+    excludes = ['**/*.kt', '**/R.java', '**/scorekeeping/util/**', '**/eventhandlers/**']
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc){
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+uploadArchives {
+    repositories.mavenDeployer {
+        configuration = configurations.deployerJar
+
+        pom.version = "$module_version"
+        pom.groupId = "$module_groupId"
+        pom.artifactId = project.module_artifactId
+        repository(url: 'git:master://git@github.com:gamechanger/gcmaven.git')
+    }
+}
